@@ -42,4 +42,5 @@ dependencies {
 
     implementation("org.pytorch:pytorch_android_lite:2.1.0")
     implementation("org.pytorch:pytorch_android_torchvision_lite:2.1.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }

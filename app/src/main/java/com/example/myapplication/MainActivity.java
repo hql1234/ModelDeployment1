@@ -15,6 +15,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.myapplication.jnpy.Npy;
+import com.example.myapplication.jnpy.NpyHeader;
+
 import org.pytorch.IValue;
 import org.pytorch.Module;
 import org.pytorch.Tensor;
@@ -30,13 +33,17 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 public class MainActivity extends AppCompatActivity {
 
     Button btnRunModel;
+    Button btnRunDistill;
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private Bitmap mBitmap = null;
     private Module mModule = null;
+
+    private float[] calibFeat = null;
 
     public static String assetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
@@ -57,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
         btnRunModel = findViewById(R.id.btnRunModel);
         btnRunModel.setOnClickListener(v -> runModelAsync());
 
+        btnRunDistill = findViewById(R.id.btnRunDistill);
+        btnRunDistill.setOnClickListener(v -> runModelDistill());
+
         try {
             mBitmap = BitmapFactory.decodeStream(getAssets().open("deeplab/deeplab.jpg"));
         } catch (IOException e) {
@@ -84,16 +92,26 @@ public class MainActivity extends AppCompatActivity {
         try {
             mModule = LiteModuleLoader.load(MainActivity.assetFilePath(getApplicationContext(), "deeplabv3_scripted_optimized.ptl"));
         } catch (IOException e) {
-            Log.e("ImageSegmentation", "Error reading assets", e);
+            Log.e("ImageSegmentation", "Error reading deep model", e);
             finish();
         }
+
+        Npy calibfeat = NpyLoadHelper.loadNumpy(this, "semg_data/calib_feat.npy");
+        TensorF32 calibfeat_ = new TensorF32(calibfeat);
+        float[] out = calibfeat_.getWindow(20);
+
+        int a = 10;
+
+    }
+
+    private void runModelDistill(){
+        btnRunDistill.setEnabled(false);
     }
 
     private void runModelAsync() {
         btnRunModel.setEnabled(false); // prevent double clicks
 
         executor.execute(() -> {
-            // 🚀 Heavy model work here
             double result = runModelInference();
 
             runOnUiThread(() -> {
