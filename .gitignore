@@ -1,2 +1,6 @@
 # Project exclude paths
 /.gradle/
+/app/src/main/assets/semg_data/calib_feat_lda.npy
+/app/src/main/assets/semg_data/calib_feat.npy
+/app/src/main/assets/semg_data/calib_label.npy
+/app/src/main/assets/deeplab/deeplabv3_scripted_optimized.ptl
