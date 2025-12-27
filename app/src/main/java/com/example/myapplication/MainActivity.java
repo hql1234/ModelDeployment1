@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -29,6 +31,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +40,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
+    List<Button> allButtons;
     Button btnRunModel;
     Button btnRunDistill;
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -43,7 +48,36 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap mBitmap = null;
     private Module mModule = null;
 
-    private float[] calibFeat = null;
+    private TensorF32 calibFeat = null;
+    private TensorF32 calibFeatLDA = null;
+    private TensorF32 calibLabel = null;
+
+    private List<Button> getAllButtons(View view) {
+        List<Button> buttons = new ArrayList<>();
+
+        if (view instanceof Button) {
+            buttons.add((Button) view);
+        }
+
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                buttons.addAll(getAllButtons(group.getChildAt(i)));
+            }
+        }
+
+        return buttons;
+    }
+
+    private void setButtonsEnabled(List<Button> buttons, boolean enabled) {
+        if (buttons == null) return;
+
+        for (Button b : buttons) {
+            if (b != null) {
+                b.setEnabled(enabled);
+            }
+        }
+    }
 
     public static String assetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
@@ -96,12 +130,13 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
 
-        Npy calibfeat = NpyLoadHelper.loadNumpy(this, "semg_data/calib_feat.npy");
-        TensorF32 calibfeat_ = new TensorF32(calibfeat);
-        float[] out = calibfeat_.getWindow(20);
+        View root = findViewById(R.id.main);
+        allButtons = getAllButtons(root);
+        setButtonsEnabled(allButtons, true);
 
-        int a = 10;
-
+        calibFeat = new TensorF32(this, "semg_data/calib_feat.npy");
+        calibFeatLDA = new TensorF32(this, "semg_data/calib_feat_lda.npy");
+        calibLabel = new TensorF32(this, "semg_data/calib_label.npy");
     }
 
     private void runModelDistill(){
